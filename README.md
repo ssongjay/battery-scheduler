@@ -4,6 +4,8 @@ macOS 메뉴바 앱으로, 요일별 배터리 충전 한도를 자동으로 전
 
 macOS 26.4(Tahoe)의 공식 Charge Limit 기능을 Accessibility API를 통해 프로그래밍적으로 제어합니다.
 
+![BatteryScheduler 메뉴바 패널](docs/screenshot_panel.png)
+
 ## 기능
 
 - **요일별 자동 전환**: 토/일/화 → 80%, 월/수/목/금 → 100%

@@ -137,18 +137,34 @@ struct MenuBarView: View {
                 ForEach(1...7, id: \.self) { weekday in
                     let limit = scheduler.policy.weekdayLimits[weekday] ?? 100
                     let isToday = Calendar.current.component(.weekday, from: Date()) == weekday
-                    VStack(spacing: 2) {
-                        Text(SchedulePolicy.weekdayName(weekday))
-                            .font(.caption2)
-                            .fontWeight(isToday ? .bold : .regular)
-                        Text("\(limit)")
-                            .font(.system(.caption2, design: .rounded))
-                            .foregroundStyle(limit == 80 ? .orange : .green)
+                    Menu {
+                        ForEach([80, 85, 90, 95, 100], id: \.self) { value in
+                            Button {
+                                scheduler.policy.weekdayLimits[weekday] = value
+                            } label: {
+                                HStack {
+                                    Text("\(value)%")
+                                    if value == limit {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+                    } label: {
+                        VStack(spacing: 2) {
+                            Text(SchedulePolicy.weekdayName(weekday))
+                                .font(.caption2)
+                                .fontWeight(isToday ? .bold : .regular)
+                            Text("\(limit)")
+                                .font(.system(.caption2, design: .rounded))
+                                .foregroundStyle(limit <= 85 ? .orange : .green)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                        .background(isToday ? Color.accentColor.opacity(0.1) : Color.clear)
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 4)
-                    .background(isToday ? Color.accentColor.opacity(0.1) : Color.clear)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .menuStyle(.borderlessButton)
                 }
             }
         }

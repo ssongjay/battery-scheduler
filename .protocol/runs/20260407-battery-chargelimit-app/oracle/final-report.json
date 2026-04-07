@@ -1,0 +1,20 @@
+{
+  "task_id": "20260407-battery-chargelimit-app",
+  "decision": "hold",
+  "summary": {
+    "oracle_total_findings": 0,
+    "oracle_new_findings_missed_by_review1": 0,
+    "oracle_carried_findings_from_review1": 0,
+    "oracle_resolved_findings_from_review1": 0,
+    "blocking_findings": 0,
+    "implementer_mistakes_missed_by_review1": {
+      "missing_requirement": 0,
+      "wrong_behavior": 0,
+      "out_of_scope_change": 0,
+      "contract_violation": 0,
+      "test_gap": 0
+    }
+  },
+  "model_notes": "",
+  "findings": []
+}

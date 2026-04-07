@@ -1,0 +1,5 @@
+작성했습니다: [r2-oracle.md](/Users/inje/Desktop/develop/projects/battery-manager/.protocol/runs/20260407-battery-menu-app/debate/r2-oracle.md)
+
+핵심 입장은 세 가지로 정리했습니다. `batt`/`battery`는 Sequoia에서 `IOPMAssertion`으로 충전을 제어하는 게 아니라 여전히 SMC 직접 쓰기 중심이라는 점, 그래서 실현 가능성은 OS 버전보다 firmware/SoC 조합 의존성이 크다는 점, 그리고 제품의 본체는 SMC 해킹이 아니라 교체 가능한 백엔드 위의 요일별 정책 엔진이어야 한다는 점입니다.
+
+검증은 브리프, `batt`/`battery` 최신 공개 코드, Apple Support의 `Charge Limit` 문서, Apple의 `IOPMAssertionTypes` 문서를 기준으로 했습니다. 코드 변경이나 테스트 실행은 없었습니다.

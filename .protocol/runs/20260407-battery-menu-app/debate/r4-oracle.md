@@ -1,0 +1,98 @@
+# Round 4 — Oracle
+
+## Position: 수렴 가능하다. 다만 Phase 0는 최소 검증으로 자르되, backend 계약과 배포 방식은 batt의 불안정성을 전제로 더 보수적으로 정해야 한다.
+
+나는 이제 큰 방향에서는 합의 가능하다고 본다. 핵심 합의점은 세 가지다. 첫째, MVP는 `batt`를 활용해 빠르게 갈 수 있다. 둘째, 제품의 본질은 SMC 제어기가 아니라 요일별 정책 엔진이다. 셋째, native backend는 선행 목표가 아니라 fallback/대체 경로다. 이 세 가지가 고정되면 토론은 충분히 수렴했다.
+
+다만 Sisyphus의 네 가지 합의 요청에는 그대로 "예"만 할 수는 없고, 두 군데는 조정이 필요하다.
+
+### 1. Phase 0 범위
+
+**대체로 동의한다.** 사용자 기기 1대에서 batt CLI로
+
+1. `80 -> 100 -> 80` 전환이 실제로 되는지
+2. sleep/wake 이후에도 정책이 유지되는지
+3. clamshell 또는 lid-close 시나리오에서 유지되는지
+
+이 세 가지를 보는 것은 현실적인 최소 검증이다. 내가 R2에서 말한 "compatibility matrix"는 제품 전체를 위한 사고방식이었지, 지금 당장 Phase 0에서 광범위 실험을 하라는 뜻은 아니었다. 단, 이 범위에는 **한 가지 보정이 필요하다**. "전환이 된다"는 기준을 batt CLI 출력만으로 판단하면 안 된다. 최소한 아래 중 하나를 같이 기록해야 한다.
+
+- 실제 배터리 메뉴/상태 변화
+- 일정 시간 후 charging state 유지 여부
+- batt status와 시스템 배터리 상태의 일치 여부
+
+즉, Phase 0은 3개 시나리오로 충분하지만, 각 시나리오는 **명령 성공 여부**가 아니라 **실제 충전 상태 변화**까지 확인해야 한다. 그 기준이면 1시간 안에 끝낼 수 있다.
+
+### 2. ChargeLimitBackend protocol
+
+지금 제안한 수준은 거의 맞다. 다만 그대로 두면 `currentChargeLimit()`의 의미가 너무 강하다.
+
+```swift
+protocol ChargeLimitBackend {
+    func setChargeLimit(_ percent: Int) async throws
+    func currentChargeLimit() async throws -> Int?
+    func isAvailable() async -> Bool
+}
+```
+
+문제는 `batt`나 향후 Apple backend 모두에서 "현재 설정된 limit"과 "실제로 지금 하드웨어가 따르는 limit"가 항상 같다고 보장할 수 없다는 점이다. batt 계열은 특히 read path가 깨질 수 있다. 그래서 Oracle 관점에서는 둘 중 하나가 더 낫다.
+
+1. 이름을 `configuredChargeLimit()`로 약하게 바꾼다.
+2. 아니면 현재 이름을 유지하되, 문서에 "best effort, nil 가능"을 명시한다.
+
+즉 **형태는 적절하지만 의미는 약하게 정의해야 한다.** `isAvailable()`도 단순 binary 존재 여부가 아니라 "이 기기에서 지금 backend를 쓸 수 있는가"여야 한다.
+
+### 3. batt 번들링 vs Homebrew 의존
+
+여기서는 **Homebrew 의존보다 앱 번들링 쪽**이 낫다. 이유는 간단하다.
+
+- Homebrew는 설치 전제 조건이 된다.
+- PATH 의존은 GUI 앱에서 취약하다.
+- 사용자 입장에서는 "앱을 설치했는데 또 패키지 매니저를 준비하라"가 큰 마찰이다.
+- batt 자체도 GUI 배포 경로를 이미 전제로 둔 흐름이 있다.
+
+물론 번들링은 라이선스, 업데이트, 서명, 교체 전략을 확인해야 한다. 하지만 제품 경험 관점에서는 그 비용을 감수할 가치가 있다. 다만 **영구 고정 번들**로 생각하면 안 된다. Phase 1의 batt는 "앱과 함께 배포되는 pinned implementation"이어야 하고, 교체 가능한 내부 의존성으로 취급해야 한다.
+
+따라서 내 권고는:
+
+- MVP: batt 번들링
+- 개발 중 임시 검증: Homebrew 설치 batt 사용 가능
+- 제품 계약: PATH 탐색 의존 금지
+
+### 4. MVP 정책 엔진 범위
+
+여기서는 **요일별 스케줄링만으로는 약간 부족하다.** "오늘만 100%" 예외 처리는 MVP에 넣는 편이 맞다.
+
+이유는 기술적 복잡도 대비 사용자 가치가 너무 크기 때문이다. 요일 스케줄만 있으면 사용자는 즉시 "오늘 외출인데 지금만 100으로 올리고 싶다"는 요구를 낸다. 이걸 지원하지 않으면 앱이 정책 엔진이 아니라 딱딱한 타이머처럼 느껴진다. 반면 구현은 복잡하지 않다. "자정까지 유효한 일회성 override" 한 개면 충분하다.
+
+반대로 아래는 MVP 밖으로 빼는 게 맞다.
+
+- 출장 모드
+- 충전 필요 시간 기반 자동 판단
+- 건강도 기반 자동 정책 추천
+
+즉 MVP 정책 엔진 범위는:
+
+- 요일별 목표 limit
+- 현재 활성 정책 표시
+- 다음 전환 시각 표시
+- `오늘만 100%` 일회성 override
+
+여기까지면 충분하다.
+
+## 수렴 지점
+
+나는 아래 아키텍처에 조건부 합의한다.
+
+```text
+Phase 0: batt CLI 검증 (사용자 기기 1대, 3개 시나리오, 실제 상태 변화까지 확인)
+Phase 1: SwiftUI MenuBarExtra + BattCLIBackend + 요일별 스케줄 정책 + 오늘만 100% override
+Phase 2: NativeSMCBackend (batt 불안정 또는 배포/통합 필요 시만)
+Phase 3: AppleChargeLimitBackend (공개 API/automation surface 생길 때)
+```
+
+추가 조정은 두 줄이면 된다.
+
+1. `currentChargeLimit()`는 strong truth가 아니라 best-effort contract로 정의할 것
+2. 배포는 Homebrew 의존이 아니라 batt pinned 번들링을 기본으로 할 것
+
+이 두 가지를 받으면, Oracle 입장에서는 **실현 가능성과 아키텍처 방향에 대한 합의가 성립한다**. 남은 것은 토론이 아니라 실행 순서다.

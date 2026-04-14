@@ -169,12 +169,19 @@ append_stage_log() {
 
 selected_next_stage() {
   local selected
-  selected="$(sed -n '/^## Decision For Next Stage$/,/^## /p' "$summary_path" | rg -o 'selected:\s*(pending|stop_at_discussion|ready_for_contract)' | head -n1 | sed -E 's/^selected:[[:space:]]*//; s/[[:space:]]+$//')"
+  selected="$(sed -n '/^## Decision For Next Stage$/,/^## /p' "$summary_path" | rg -o 'selected:\s*(pending|closed|stop_at_discussion|ready_for_contract)' | head -n1 | sed -E 's/^selected:[[:space:]]*//; s/[[:space:]]+$//')"
   if [[ -z "$selected" ]]; then
     echo "summary missing selected next stage: $summary_path" >&2
     exit 1
   fi
-  printf '%s' "$selected"
+  case "$selected" in
+    stop_at_discussion|ready_for_contract)
+      printf '%s' "closed"
+      ;;
+    *)
+      printf '%s' "$selected"
+      ;;
+  esac
 }
 
 require_score_shape() {
@@ -560,8 +567,8 @@ validate_completion() {
       require_summary_shape
       require_score_shape
       require_debate_meta_shape
-      [[ "$(selected_next_stage)" == "stop_at_discussion" ]] || {
-        echo "debate-discuss requires selected next stage = stop_at_discussion" >&2
+      [[ "$(selected_next_stage)" == "closed" ]] || {
+        echo "debate-discuss requires selected = closed" >&2
         exit 1
       }
       ;;
@@ -570,8 +577,8 @@ validate_completion() {
       require_score_shape
       require_debate_meta_shape
       require_contract_shape
-      [[ "$(selected_next_stage)" == "ready_for_contract" ]] || {
-        echo "debate-build requires selected next stage = ready_for_contract" >&2
+      [[ "$(selected_next_stage)" == "closed" ]] || {
+        echo "debate-build requires selected = closed" >&2
         exit 1
       }
       jq -e '.overall_verdict != "unresolved"' "$score_path" >/dev/null || {

@@ -2,13 +2,28 @@
 set -euo pipefail
 
 if [[ $# -lt 1 || $# -gt 3 ]]; then
-  echo "usage: $0 <task-id> [discussion_only|implementation_bound] [oracle|sisyphus]" >&2
+  echo "usage: $0 <task-id> [oracle|sisyphus] [discussion_only|implementation_bound]" >&2
   exit 1
 fi
 
 raw_id="$1"
-intent="${2:-implementation_bound}"
-starter="${3:-sisyphus}"
+intent="discussion_only"
+starter="sisyphus"
+
+for arg in "${@:2}"; do
+  case "$arg" in
+    discussion_only|implementation_bound)
+      intent="$arg"
+      ;;
+    oracle|sisyphus)
+      starter="$arg"
+      ;;
+    *)
+      echo "invalid arg: $arg" >&2
+      exit 1
+      ;;
+  esac
+done
 
 # task-id에 YYYYMMDD- 접두사가 없으면 오늘 날짜를 자동으로 붙인다
 if [[ "$raw_id" =~ ^[0-9]{8}- ]]; then
@@ -16,24 +31,6 @@ if [[ "$raw_id" =~ ^[0-9]{8}- ]]; then
 else
   task_id="$(date +%Y%m%d)-${raw_id}"
 fi
-
-case "$intent" in
-  discussion_only|implementation_bound)
-    ;;
-  *)
-    echo "invalid intent: $intent" >&2
-    exit 1
-    ;;
-esac
-
-case "$starter" in
-  oracle|sisyphus)
-    ;;
-  *)
-    echo "invalid starter: $starter" >&2
-    exit 1
-    ;;
-esac
 
 scorer="oracle"
 if [[ "$starter" == "oracle" ]]; then

@@ -86,10 +86,10 @@ ${(F)round_paths}
 ## Decision For Next Stage
 (다음 단계 결정 설명)
 
-- selected: stop_at_discussion
+- selected: closed
 \`\`\`
 
-\`selected:\` 값은 다음 중 하나다: \`stop_at_discussion\`, \`ready_for_contract\`, \`pending\`
+\`selected:\` 값은 다음 중 하나다: \`pending\`, \`closed\`
 
 ## score 필수 스키마 (02-debate-score.json)
 

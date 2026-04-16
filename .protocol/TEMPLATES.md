@@ -18,10 +18,14 @@
   stage-log.jsonl
   00-brief.md
   debate/
+    opening-oracle.md
+    opening-sisyphus.md
     round-001/
       oracle.md
       sisyphus.md
   prompts/
+    opening-oracle.md
+    opening-sisyphus.md
     round-001-oracle.md
     round-001-sisyphus.md
   01-debate-summary.md
@@ -37,10 +41,14 @@
   stage-log.jsonl
   00-brief.md
   debate/
+    opening-oracle.md
+    opening-sisyphus.md
     round-001/
       oracle.md
       sisyphus.md
   prompts/
+    opening-oracle.md
+    opening-sisyphus.md
     round-001-oracle.md
     round-001-sisyphus.md
     contract-draft-<starter>.md
@@ -96,6 +104,39 @@
 ## Relevant Files / Docs
 ```
 
+규칙:
+
+- brief는 문제 정의 문서다
+- preferred solution / 추천 architecture / 대안 비교 결론은 brief에 쓰지 않는다
+
+## debate/opening-oracle.md
+
+```md
+# Oracle Opening
+
+## Preferred Direction
+
+## Alternatives Considered
+
+## Why This Direction
+
+## Risks In Other Directions
+```
+
+## debate/opening-sisyphus.md
+
+```md
+# Sisyphus Opening
+
+## Preferred Direction
+
+## Alternatives Considered
+
+## Why This Direction
+
+## Risks In Other Directions
+```
+
 ## debate/round-001/oracle.md
 
 ```md
@@ -128,9 +169,54 @@
 ## Notes
 ```
 
-토론 기록은 라운드별 + actor별 파일로 누적한다.
+토론 기록은 opening + 라운드별 + actor별 파일로 누적한다.
 각 actor는 자기 파일만 직접 수정한다.
-토론 중에는 round 파일만 추가하고, summary/score는 토론 종료 후 작성한다.
+opening 단계에서는 상대 opening을 읽지 않는다.
+summary/score는 두 opening과 최소 1회 라운드 이후에만 작성한다.
+
+## prompts/opening-oracle.md
+
+```md
+Oracle,
+
+아래 canonical 파일만 읽고 작업하라.
+
+- brief: `.protocol/runs/<task-id>/00-brief.md`
+- target file: `.protocol/runs/<task-id>/debate/opening-oracle.md`
+
+해야 할 일:
+
+1. brief만 읽는다.
+2. counterpart opening이나 round 파일은 읽지 않는다.
+3. `target file`의 아래 섹션만 채운다.
+   - `## Preferred Direction`
+   - `## Alternatives Considered`
+   - `## Why This Direction`
+   - `## Risks In Other Directions`
+4. stdout에는 짧게 `updated <target file>`만 출력한다.
+```
+
+## prompts/opening-sisyphus.md
+
+```md
+Sisyphus,
+
+아래 canonical 파일만 읽고 작업하라.
+
+- brief: `.protocol/runs/<task-id>/00-brief.md`
+- target file: `.protocol/runs/<task-id>/debate/opening-sisyphus.md`
+
+해야 할 일:
+
+1. brief만 읽는다.
+2. counterpart opening이나 round 파일은 읽지 않는다.
+3. `target file`의 아래 섹션만 채운다.
+   - `## Preferred Direction`
+   - `## Alternatives Considered`
+   - `## Why This Direction`
+   - `## Risks In Other Directions`
+4. stdout에는 짧게 `updated <target file>`만 출력한다.
+```
 
 ## prompts/round-001-sisyphus.md
 
@@ -165,6 +251,8 @@ Sisyphus,
 읽을 파일:
 
 - brief: `.protocol/runs/<task-id>/00-brief.md`
+- opening oracle: `.protocol/runs/<task-id>/debate/opening-oracle.md`
+- opening sisyphus: `.protocol/runs/<task-id>/debate/opening-sisyphus.md`
 - round 001 oracle: `.protocol/runs/<task-id>/debate/round-001/oracle.md`
 - round 001 sisyphus: `.protocol/runs/<task-id>/debate/round-001/sisyphus.md`
 
@@ -251,12 +339,20 @@ Oracle,
 
 - Oracle:
 - Sisyphus:
+- Direction quality:
+- Critique quality:
+- Originator:
+- Final owner:
 - Current conclusion:
 
 ### issue-2
 
 - Oracle:
 - Sisyphus:
+- Direction quality:
+- Critique quality:
+- Originator:
+- Final owner:
 - Current conclusion:
 
 ## Decision For Next Stage
@@ -275,10 +371,13 @@ Oracle,
   "overall_verdict": "balanced",
   "issues": [
     {
-      "issue_id": "issue-1",
       "topic": "example topic",
       "oracle_position": "example oracle position",
       "sisyphus_position": "example sisyphus position",
+      "direction_quality": "oracle",
+      "critique_quality": "sisyphus",
+      "originator": "sisyphus",
+      "final_owner": "oracle",
       "verdict": "oracle",
       "confidence": "high",
       "reason": "example reason",
@@ -293,6 +392,9 @@ Oracle,
 
 - `verdict`는 `oracle | sisyphus | converged | unresolved`만 사용
 - `overall_verdict`는 `oracle_dominant | sisyphus_dominant | balanced | unresolved`만 사용
+- `direction_quality`, `critique_quality`는 `oracle | sisyphus | balanced`만 사용
+- `originator`는 `oracle | sisyphus | shared`만 사용
+- `final_owner`는 `oracle | sisyphus | shared | unresolved`만 사용
 - `starter`와 `scorer`는 같지 않아야 한다
 - unresolved 이슈가 남아 있으면 `/escalate` 후 contract 단계로 넘어가지 않는다
 

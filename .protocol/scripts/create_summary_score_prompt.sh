@@ -50,6 +50,8 @@ ${scorer_name},
 읽을 파일:
 
 - brief: \`${run_dir}/00-brief.md\`
+- opening oracle: \`${run_dir}/debate/opening-oracle.md\`
+- opening sisyphus: \`${run_dir}/debate/opening-sisyphus.md\`
 ${(F)round_paths}
 
 수정할 파일:
@@ -59,15 +61,17 @@ ${(F)round_paths}
 
 작업 규칙:
 
-1. 위 round 파일들만 근거로 사용한다.
+1. brief, opening, round 파일들만 근거로 사용한다.
 2. \`01-debate-summary.md\`를 실제 내용으로 채운다.
 3. \`02-debate-score.json\`도 실제 내용으로 채운다.
 4. \`starter\`는 \`${starter}\`, \`scorer\`는 \`${scorer}\`, \`intent\`는 \`${intent}\`로 유지한다.
 5. unresolved 이슈가 있으면 \`overall_verdict\`는 \`unresolved\`만 사용한다.
 6. contract가 아직 없으면 각 issue의 \`adopted_in_contract\`는 \`false\`로 둔다.
 7. \`score\`의 issue는 최소 4개 이상으로 구조화하라.
-8. 다른 파일은 수정하지 않는다.
-9. stdout에는 짧게 \`updated summary and score\`만 출력한다.
+8. 각 issue마다 \`direction_quality\`, \`critique_quality\`, \`originator\`, \`final_owner\`를 반드시 채운다.
+9. \`direction_quality\`와 \`critique_quality\`를 혼동하지 않는다.
+10. 다른 파일은 수정하지 않는다.
+11. stdout에는 짧게 \`updated summary and score\`만 출력한다.
 
 ## summary 필수 구조 (01-debate-summary.md)
 
@@ -82,6 +86,7 @@ ${(F)round_paths}
 
 ## Position Summary By Issue
 (이슈별 Oracle/Sisyphus 입장 비교 테이블 또는 목록)
+(각 issue에 direction quality / critique quality / originator / final owner 포함)
 
 ## Decision For Next Stage
 (다음 단계 결정 설명)
@@ -104,6 +109,12 @@ ${(F)round_paths}
   "issues": [
     {
       "topic": "이슈 제목 (string)",
+      "oracle_position": "Oracle 입장 (string)",
+      "sisyphus_position": "Sisyphus 입장 (string)",
+      "direction_quality": "oracle | sisyphus | balanced",
+      "critique_quality": "oracle | sisyphus | balanced",
+      "originator": "oracle | sisyphus | shared",
+      "final_owner": "oracle | sisyphus | shared | unresolved",
       "verdict": "oracle | sisyphus | converged | unresolved",
       "status": "resolved | unresolved",
       "confidence": "high | medium | low",
@@ -116,6 +127,9 @@ ${(F)round_paths}
 
 - \`overall_verdict\` 허용값: \`oracle_dominant\`, \`sisyphus_dominant\`, \`balanced\`, \`unresolved\`
 - \`verdict\` 허용값: \`oracle\`, \`sisyphus\`, \`converged\`, \`unresolved\`
+- \`direction_quality\`, \`critique_quality\` 허용값: \`oracle\`, \`sisyphus\`, \`balanced\`
+- \`originator\` 허용값: \`oracle\`, \`sisyphus\`, \`shared\`
+- \`final_owner\` 허용값: \`oracle\`, \`sisyphus\`, \`shared\`, \`unresolved\`
 - \`status\` 허용값: \`resolved\`, \`unresolved\`
 - \`confidence\` 허용값: \`high\`, \`medium\`, \`low\`
 - unresolved 이슈가 1개라도 있으면 \`overall_verdict\`는 반드시 \`unresolved\`

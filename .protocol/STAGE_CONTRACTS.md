@@ -46,8 +46,8 @@
 
 | Stage | Owner | Intent | Reads | Writes |
 |------|------|------|------|------|
-| `debate-discuss` | Starter initiates, Oracle + Sisyphus debate | `discussion_only` | `stage-log.jsonl`, `meta.json`, `00-brief.md` | `debate/round-*/oracle.md`, `debate/round-*/sisyphus.md`, `prompts/*`, `01-debate-summary.md`, `02-debate-score.json`, `debate-meta.json`, `stage-log.jsonl` |
-| `debate-build` | Starter initiates, Oracle + Sisyphus debate | `implementation_bound` | `stage-log.jsonl`, `meta.json`, `00-brief.md` | `debate/round-*/oracle.md`, `debate/round-*/sisyphus.md`, `prompts/*`, `01-debate-summary.md`, `02-debate-score.json`, `debate-meta.json`, `03-contract.md`, `stage-log.jsonl` |
+| `debate-discuss` | Starter initiates, Oracle + Sisyphus debate | `discussion_only` | `stage-log.jsonl`, `meta.json`, `00-brief.md` | `debate/opening-oracle.md`, `debate/opening-sisyphus.md`, `debate/round-*/oracle.md`, `debate/round-*/sisyphus.md`, `prompts/*`, `01-debate-summary.md`, `02-debate-score.json`, `debate-meta.json`, `stage-log.jsonl` |
+| `debate-build` | Starter initiates, Oracle + Sisyphus debate | `implementation_bound` | `stage-log.jsonl`, `meta.json`, `00-brief.md` | `debate/opening-oracle.md`, `debate/opening-sisyphus.md`, `debate/round-*/oracle.md`, `debate/round-*/sisyphus.md`, `prompts/*`, `01-debate-summary.md`, `02-debate-score.json`, `debate-meta.json`, `03-contract.md`, `stage-log.jsonl` |
 | `oracle-pre-impl-guardrails` | Oracle | `implementation_bound` | `stage-log.jsonl`, `meta.json`, `03-contract.md`, `01-debate-summary.md`, `02-debate-score.json` | `oracle/implementation-guardrails.md`, `stage-log.jsonl` |
 | `oracle-shadow-implement` | Oracle | `implementation_bound` | `stage-log.jsonl`, `meta.json`, `03-contract.md`, `oracle/implementation-guardrails.md`, 현재 작업 트리 상태 | comparison-only shadow code changes, `oracle/shadow-implementation-summary.md`, `oracle/shadow-implementation-report.json`, validation notes, `stage-log.jsonl` |
 | `implement-from-contract` | Sisyphus | `implementation_bound` | `stage-log.jsonl`, `meta.json`, `00-brief.md`, `01-debate-summary.md`, `02-debate-score.json`, `03-contract.md` | code changes, `sisyphus/implementation-summary.md`, `sisyphus/implementation-report.json`, validation notes, `stage-log.jsonl` |
@@ -61,16 +61,19 @@
 ### Owner
 
 - starter가 진입을 열고, Oracle/Sisyphus가 동급 토론을 수행한다
+- starter는 문제 정의만 먼저 쓰고, 해법 제시는 opening 단계에서 각 actor가 독립적으로 한다
 - scorer는 starter가 아닌 쪽이 기본이다
 
 ### Required Inputs
 
 - `meta.json`
 - `00-brief.md`
-- counter-brief에 필요한 문맥
+- independent opening에 필요한 문맥
 
 ### Required Outputs
 
+- `debate/opening-oracle.md`
+- `debate/opening-sisyphus.md`
 - `debate/round-*/oracle.md`
 - `debate/round-*/sisyphus.md`
 - `prompts/round-*-sisyphus.md`
@@ -81,6 +84,9 @@
 
 ### Completion Gate
 
+- Oracle opening과 Sisyphus opening이 모두 존재한다
+- 양 opening이 서로를 읽기 전에 독립적으로 작성됐다
+- 최소 1회 이상의 본토론(round)이 존재한다
 - `summary`에 resolved / unresolved가 모두 정리되어 있다
 - `score`에 각 핵심 issue가 기록되어 있다
 - `overall_verdict`가 비어 있지 않다
@@ -88,6 +94,8 @@
 
 ### Stop Conditions
 
+- opening 중 하나라도 비어 있다
+- opening만 있고 본토론(round)이 없다
 - 핵심 논점이 아직 정리되지 않았다
 - score의 핵심 issue가 비어 있다
 - scorer가 starter와 동일하다
@@ -97,16 +105,19 @@
 ### Owner
 
 - starter가 진입을 열고, Oracle/Sisyphus가 동급 토론을 수행한다
+- independent opening 두 개가 모두 선행되어야 한다
 - contract 승인권은 항상 Oracle이다
 
 ### Required Inputs
 
 - `meta.json`
 - `00-brief.md`
-- counter-brief에 필요한 문맥
+- independent opening에 필요한 문맥
 
 ### Required Outputs
 
+- `debate/opening-oracle.md`
+- `debate/opening-sisyphus.md`
 - `debate/round-*/oracle.md`
 - `debate/round-*/sisyphus.md`
 - `prompts/round-*-sisyphus.md`
@@ -118,6 +129,8 @@
 
 ### Completion Gate
 
+- Oracle opening과 Sisyphus opening이 모두 존재한다
+- 최소 1회 이상의 본토론(round)이 존재한다
 - `summary`가 완성되어 있다
 - `score`가 완성되어 있다
 - `03-contract.md`가 scope / non-goals / forbidden approaches / acceptance criteria를 포함한다

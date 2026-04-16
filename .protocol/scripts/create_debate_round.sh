@@ -1,20 +1,30 @@
 #!/bin/zsh
 set -euo pipefail
 
-if [[ $# -ne 2 ]]; then
-  echo "usage: $0 <task-id> <round-number>" >&2
+script_dir="${0:A:h}"
+export PROTOCOL_SCRIPT_DIR="$script_dir"
+source "${script_dir}/protocol_common.sh"
+
+if [[ $# -lt 2 || $# -gt 3 ]]; then
+  echo "usage: $0 <task-id> <round-number> [--detached-protocol]" >&2
   exit 1
 fi
 
+protocol_require_managed_alignment "$@"
+
 task_id="$1"
 round_number="$2"
+
+if [[ $# -eq 3 && "$3" != "--detached-protocol" ]]; then
+  echo "invalid arg: $3" >&2
+  exit 1
+fi
 
 if ! [[ "$round_number" =~ '^[0-9]+$' ]]; then
   echo "round-number must be an integer: $round_number" >&2
   exit 1
 fi
 
-script_dir="${0:A:h}"
 protocol_dir="${script_dir:h}"
 run_dir="${protocol_dir}/runs/${task_id}"
 meta_path="${run_dir}/meta.json"
@@ -68,6 +78,8 @@ ${actor_name},
 아래 canonical 파일만 읽고 작업하라.
 
 - brief: \`${run_dir}/00-brief.md\`
+- oracle opening: \`${debate_dir}/opening-oracle.md\`
+- sisyphus opening: \`${debate_dir}/opening-sisyphus.md\`
 EOF
 
   if [[ -n "$previous_same_file" ]]; then
@@ -100,16 +112,17 @@ EOF
 ## 해야 할 일
 
 1. brief를 읽는다.
-2. counterpart round file에 실질 내용이 있으면 그 내용을 읽고 **비판적으로** 반론/응답한다.
-3. previous your round file이 있으면 자기 기존 입장과 무엇이 달라졌는지 반영한다.
-4. target file의 아래 섹션만 채운다.
+2. 두 opening을 읽고, opening에서 나온 preferred direction / alternatives를 기준으로 **비판적으로** 반론/응답한다.
+3. counterpart round file에 실질 내용이 있으면 그 내용을 읽고 추가 반론/응답한다.
+4. previous your round file이 있으면 자기 기존 입장과 무엇이 달라졌는지 반영한다.
+5. target file의 아래 섹션만 채운다.
    - \`## ${section_prefix} Position\`
    - \`## ${section_prefix} Critique\`
    - \`## Current State\`
    - \`## Notes\`
-5. counterpart round file이 아직 placeholder 수준이면, 이번 응답을 opening position으로 작성한다.
-6. target file 외 다른 round 파일은 수정하지 않는다.
-7. stdout에는 짧게 \`updated <target file>\`만 출력한다.
+6. round-001은 opening이 아니라 **첫 rebuttal round**다. opening 내용을 반복하지 말고, 무엇을 유지/수정/반박하는지 명확히 적는다.
+7. target file 외 다른 round 파일은 수정하지 않는다.
+8. stdout에는 짧게 \`updated <target file>\`만 출력한다.
 EOF
 }
 

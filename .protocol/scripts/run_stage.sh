@@ -1,14 +1,23 @@
 #!/bin/zsh
 set -euo pipefail
 
-if [[ $# -lt 2 || $# -gt 3 ]]; then
-  echo "usage: $0 <task-id> <stage> [start|complete]" >&2
+script_dir="${0:A:h}"
+export PROTOCOL_SCRIPT_DIR="$script_dir"
+source "${script_dir}/protocol_common.sh"
+
+if [[ $# -lt 2 || $# -gt 4 ]]; then
+  echo "usage: $0 <task-id> <stage> [start|complete] [--detached-protocol]" >&2
   exit 1
 fi
 
 task_id="$1"
 stage="$2"
 action="${3:-start}"
+
+if [[ $# -eq 4 && "$4" != "--detached-protocol" ]]; then
+  echo "invalid arg: $4" >&2
+  exit 1
+fi
 
 case "$stage" in
   debate-discuss|debate-build|oracle-pre-impl-guardrails|oracle-shadow-implement|implement-from-contract|review1-from-contract|oracle-final-review|fix-from-final|oracle-closeout)
@@ -28,7 +37,8 @@ case "$action" in
     ;;
 esac
 
-script_dir="${0:A:h}"
+protocol_require_managed_alignment "$@"
+
 protocol_dir="${script_dir:h}"
 repo_root="${protocol_dir:h}"
 run_dir="${protocol_dir}/runs/${task_id}"
@@ -39,6 +49,8 @@ brief_path="${run_dir}/00-brief.md"
 summary_path="${run_dir}/01-debate-summary.md"
 score_path="${run_dir}/02-debate-score.json"
 debate_meta_path="${run_dir}/debate-meta.json"
+opening_oracle_path="${run_dir}/debate/opening-oracle.md"
+opening_sisyphus_path="${run_dir}/debate/opening-sisyphus.md"
 contract_path="${run_dir}/03-contract.md"
 review1_summary_path="${run_dir}/04-review1.md"
 oracle_final_path="${run_dir}/05-oracle-final.md"
@@ -184,6 +196,28 @@ selected_next_stage() {
   esac
 }
 
+require_openings_shape() {
+  require_file "$opening_oracle_path"
+  require_file "$opening_sisyphus_path"
+  require_section_has_content "$opening_oracle_path" '## Preferred Direction'
+  require_section_has_content "$opening_oracle_path" '## Alternatives Considered'
+  require_section_has_content "$opening_oracle_path" '## Why This Direction'
+  require_section_has_content "$opening_oracle_path" '## Risks In Other Directions'
+  require_section_has_content "$opening_sisyphus_path" '## Preferred Direction'
+  require_section_has_content "$opening_sisyphus_path" '## Alternatives Considered'
+  require_section_has_content "$opening_sisyphus_path" '## Why This Direction'
+  require_section_has_content "$opening_sisyphus_path" '## Risks In Other Directions'
+}
+
+require_debate_rounds_exist() {
+  local round_count
+  round_count="$(find "${run_dir}/debate" -maxdepth 1 -type d -name 'round-*' | wc -l | tr -d ' ')"
+  if [[ "$round_count" -lt 1 ]]; then
+    echo "at least one debate round is required: ${run_dir}/debate" >&2
+    exit 1
+  fi
+}
+
 require_score_shape() {
   require_file "$score_path"
 
@@ -198,6 +232,24 @@ require_score_shape() {
     (.overall_verdict | IN("oracle_dominant", "sisyphus_dominant", "balanced", "unresolved")) and
     (.issues | all(
       .topic | type == "string" and length > 0
+    )) and
+    (.issues | all(
+      .oracle_position | type == "string" and length > 0
+    )) and
+    (.issues | all(
+      .sisyphus_position | type == "string" and length > 0
+    )) and
+    (.issues | all(
+      .direction_quality | IN("oracle", "sisyphus", "balanced")
+    )) and
+    (.issues | all(
+      .critique_quality | IN("oracle", "sisyphus", "balanced")
+    )) and
+    (.issues | all(
+      .originator | IN("oracle", "sisyphus", "shared")
+    )) and
+    (.issues | all(
+      .final_owner | IN("oracle", "sisyphus", "shared", "unresolved")
     )) and
     (.issues | all(
       .verdict | IN("oracle", "sisyphus", "converged", "unresolved")
@@ -429,6 +481,14 @@ require_summary_shape() {
   require_section_has_content "$summary_path" '## Resolved'
   require_section_has_content "$summary_path" '## Unresolved'
   require_section_has_content "$summary_path" '## Position Summary By Issue'
+  rg -q 'Direction quality:' "$summary_path" || {
+    echo "summary missing direction quality markers: $summary_path" >&2
+    exit 1
+  }
+  rg -q 'Critique quality:' "$summary_path" || {
+    echo "summary missing critique quality markers: $summary_path" >&2
+    exit 1
+  }
   selected_next_stage >/dev/null
 }
 
@@ -524,6 +584,7 @@ validate_start_inputs() {
     debate-discuss|debate-build)
       require_file "$meta_path"
       require_file "$brief_path"
+      require_openings_shape
       ;;
     oracle-pre-impl-guardrails)
       require_contract_shape
@@ -564,6 +625,8 @@ validate_start_inputs() {
 validate_completion() {
   case "$stage" in
     debate-discuss)
+      require_openings_shape
+      require_debate_rounds_exist
       require_summary_shape
       require_score_shape
       require_debate_meta_shape
@@ -573,6 +636,8 @@ validate_completion() {
       }
       ;;
     debate-build)
+      require_openings_shape
+      require_debate_rounds_exist
       require_summary_shape
       require_score_shape
       require_debate_meta_shape

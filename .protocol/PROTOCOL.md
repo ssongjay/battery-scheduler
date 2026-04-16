@@ -16,8 +16,11 @@ Oracle summary/score 수동 helper는 [run_oracle_summary_score.sh](/Users/inje/
 Oracle 토론 라운드 래퍼는 [run_oracle_round.sh](/Users/inje/Desktop/develop/projects/buy-good-things/.protocol/scripts/run_oracle_round.sh)다.
 Oracle 범용 동기화 래퍼는 [run_oracle_sync.sh](/Users/inje/Desktop/develop/projects/buy-good-things/.protocol/scripts/run_oracle_sync.sh)다.
 Oracle debate meta 래퍼는 [run_oracle_debate_meta.sh](/Users/inje/Desktop/develop/projects/buy-good-things/.protocol/scripts/run_oracle_debate_meta.sh)다.
+Oracle opening 래퍼는 [run_oracle_opening.sh](/Users/inje/Desktop/develop/projects/buy-good-things/.protocol/scripts/run_oracle_opening.sh)다.
 Sisyphus contract draft 동기화 래퍼는 [run_sisyphus_contract_draft.sh](/Users/inje/Desktop/develop/projects/buy-good-things/.protocol/scripts/run_sisyphus_contract_draft.sh)다.
 Sisyphus debate meta 동기화 래퍼는 [run_sisyphus_debate_meta.sh](/Users/inje/Desktop/develop/projects/buy-good-things/.protocol/scripts/run_sisyphus_debate_meta.sh)다.
+Sisyphus opening 래퍼는 [run_sisyphus_opening.sh](/Users/inje/Desktop/develop/projects/buy-good-things/.protocol/scripts/run_sisyphus_opening.sh)다.
+opening-first debate bootstrap 래퍼는 [start_debate.sh](/Users/inje/Desktop/develop/projects/buy-good-things/.protocol/scripts/start_debate.sh)다.
 Sisyphus-starter 전용 아카이빙 래퍼는 [archive_sisyphus_artifact.sh](/Users/inje/Desktop/develop/projects/buy-good-things/.protocol/scripts/archive_sisyphus_artifact.sh)다.
 Sisyphus stage artifact 생성기는 [write_claude_stage_artifact.py](/Users/inje/Desktop/develop/projects/buy-good-things/.protocol/scripts/write_claude_stage_artifact.py)다.
 canonical/legacy 통계 집계는 [aggregate_stats.py](/Users/inje/Desktop/develop/projects/buy-good-things/.protocol/scripts/aggregate_stats.py)로 한다.
@@ -121,8 +124,9 @@ Oracle과 Sisyphus 모두 AI이므로, **상대의 주장을 쉽게 "맞다"고 
 
 | 단계 | 기본 담당 | 비고 |
 |------|------|------|
-| Brief | Starter | starter가 최초 문제 정의와 맥락 수집을 연다 |
-| Counter-brief | Non-starter | starter advantage 상쇄용 독립 반론/대안 제시 |
+| Brief | Starter | starter가 문제 정의와 맥락 수집을 연다. 해법 선호안은 여기서 밀지 않는다 |
+| Oracle Opening | Oracle | counterpart opening을 읽기 전 독립 해법/대안 제시 |
+| Sisyphus Opening | Sisyphus | counterpart opening을 읽기 전 독립 해법/대안 제시 |
 | Debate | Oracle + Sisyphus | 동급 토론 단계 |
 | Debate Summary | Non-starter 기본 | 토론 종료 후 정리, 양측 검토 가능 |
 | Debate Score | Non-starter 기본 | 논점별 판정 기록, Oracle이 최종 확인 |
@@ -159,6 +163,33 @@ Oracle과 Sisyphus 모두 AI이므로, **상대의 주장을 쉽게 "맞다"고 
 - Sisyphus 구현 시작 시점에는 Oracle shadow code가 active working tree에 남아 있으면 안 된다
 - 토론 메타는 구조화 축으로 남기되, 구현/리뷰/final/closeout에서 보인 모델 특성은 각 report JSON의 `model_notes` 자유 텍스트로 남긴다
 
+## Brief vs Opening
+
+starter advantage를 줄이기 위해, 이 프로토콜은 **문제 정의**와 **해법 제시**를 분리한다.
+
+- `00-brief.md`는 문제 정의 문서다
+- `starter`는 brief를 쓰지만, brief 안에서 preferred architecture / preferred solution / 추천 대안을 길게 밀어서는 안 된다
+- 해법 제시는 `Oracle Opening`, `Sisyphus Opening` 단계에서 각각 독립적으로 한다
+- opening 단계에서는 상대 opening을 읽지 않는다
+- round-001부터만 상대 opening을 읽고 본격 반박/수정 토론을 한다
+- opening 단계도 가능하면 canonical wrapper(`run_oracle_opening.sh`, `run_sisyphus_opening.sh`)를 사용해 세션/응답/로그를 남긴다
+- opening까지 한 번에 올리고 싶으면 `start_debate.sh`를 사용한다
+
+brief에 들어가야 하는 것:
+
+- 요청
+- 문제 정의
+- 변경 대상
+- non-goals
+- constraints
+- relevant files / docs
+
+brief에 넣지 말아야 하는 것:
+
+- preferred solution
+- 대안 비교 결론
+- 상대가 그대로 반박하게 되는 선호 구조 상세안
+
 ## Intent
 
 ### discussion_only
@@ -179,22 +210,24 @@ Oracle과 Sisyphus 모두 AI이므로, **상대의 주장을 쉽게 "맞다"고 
 `implementation_bound`에서는 항상 아래 순서를 유지한다.
 
 1. Brief
-2. Counter-brief
-3. Debate
-4. Debate Summary
-5. Debate Score
-6. Contract
-7. Oracle Guardrails
-8. Oracle Shadow Implementation
-9. Implementation
-10. Review1
-11. Oracle Final Review
-12. 필요 시 Fix From Final
-13. 필요 시 Oracle Closeout
+2. Oracle Opening
+3. Sisyphus Opening
+4. Debate
+5. Debate Summary
+6. Debate Score
+7. Contract
+8. Oracle Guardrails
+9. Oracle Shadow Implementation
+10. Implementation
+11. Review1
+12. Oracle Final Review
+13. 필요 시 Fix From Final
+14. 필요 시 Oracle Closeout
 
 단계 생략 금지:
 
-- Counter-brief 없이 본 토론 진입 금지
+- Oracle Opening 없이 본 토론 진입 금지
+- Sisyphus Opening 없이 본 토론 진입 금지
 - Summary 없이 Score 작성 금지
 - Score 없이 Contract 진입 금지
 - 계약서 없이 Oracle guardrails / shadow implementation / 구현 진입 금지
@@ -203,34 +236,36 @@ Oracle과 Sisyphus 모두 AI이므로, **상대의 주장을 쉽게 "맞다"고 
 `discussion_only`에서는 아래만 수행한다.
 
 1. Brief
-2. Counter-brief
-3. Debate
-4. Debate Summary
-5. Debate Score
+2. Oracle Opening
+3. Sisyphus Opening
+4. Debate
+5. Debate Summary
+6. Debate Score
 
 ## Starter별 흐름
 
 ### starter = oracle
 
 1. Oracle이 맥락 수집과 문제 정의를 시작한다
-2. Sisyphus가 counter-brief를 제출한다
-3. Oracle과 Sisyphus가 동급 토론을 한다
-4. Sisyphus가 summary와 score 초안을 작성한다
-5. `discussion_only`면 양측 검토 후 종료한다
-6. `implementation_bound`면 Oracle이 contract를 작성/승인한다
-7. Oracle이 implementation guardrails를 남긴다
-8. Oracle이 comparison-only shadow implementation을 만들고 stash/격리한다
-9. Sisyphus가 canonical 구현을 한다
-10. Sisyphus가 1차 리뷰를 한다
-11. Oracle이 최종 Oracle 리뷰를 한다
-12. 필요하면 Sisyphus가 final finding을 반영한다
-13. Oracle이 closeout으로 종료 승인한다
+2. Oracle이 자기 opening을 먼저 쓴다
+3. Sisyphus가 Oracle opening을 읽지 않고 자기 opening을 쓴다
+4. Oracle과 Sisyphus가 동급 토론을 한다
+5. Sisyphus가 summary와 score 초안을 작성한다
+6. `discussion_only`면 양측 검토 후 종료한다
+7. `implementation_bound`면 Oracle이 contract를 작성/승인한다
+8. Oracle이 implementation guardrails를 남긴다
+9. Oracle이 comparison-only shadow implementation을 만들고 stash/격리한다
+10. Sisyphus가 canonical 구현을 한다
+11. Sisyphus가 1차 리뷰를 한다
+12. Oracle이 최종 Oracle 리뷰를 한다
+13. 필요하면 Sisyphus가 final finding을 반영한다
+14. Oracle이 closeout으로 종료 승인한다
 
 ### starter = sisyphus
 
-1. Sisyphus가 brief와 초기 입장을 정리한다
-2. Oracle이 counter-brief를 제출한다
-3. Sisyphus가 Oracle에 토론 handoff를 한다
+1. Sisyphus가 brief와 문제 정의를 정리한다
+2. Sisyphus가 자기 opening을 먼저 쓴다
+3. Oracle이 Sisyphus opening을 읽지 않고 자기 opening을 쓴다
 4. Oracle과 Sisyphus가 동급 토론을 한다
 5. Oracle이 summary와 score 초안을 작성한다
 6. `discussion_only`면 양측 검토 후 종료한다
@@ -566,7 +601,8 @@ markdown artifact는 최소 아래 섹션을 포함한다.
 
 - summary는 토론의 서사를 남긴다
 - score는 논점별 판정과 근거를 구조화한다
-- 둘 다 있어야 나중에 모델별 성향, 채택 근거, 미해결 쟁점을 추적할 수 있다
+- score는 특히 `누가 더 좋은 방향을 먼저 제시했는가`와 `누가 더 좋은 반박/정교화를 했는가`를 분리해서 남겨야 한다
+- 둘 다 있어야 나중에 모델별 성향, 채택 근거, 미해결 쟁점, 아이디어 provenance를 추적할 수 있다
 
 ### 필수 원칙
 
@@ -620,10 +656,26 @@ markdown artifact는 최소 아래 섹션을 포함한다.
 
 ### starter advantage 상쇄 규칙
 
-1. Non-starter는 반드시 counter-brief를 제출한다.
-2. counter-brief는 최소 하나의 대안 또는 최소 세 개의 리스크를 포함해야 한다.
-3. starter와 score 초안 작성자는 같으면 안 된다.
-4. `meta.json`에는 `starter`를 기록하고, `02-debate-score.json`에는 `scorer`를 기록한다.
+1. starter는 brief에서 preferred solution을 길게 밀어서는 안 된다.
+2. Oracle과 Sisyphus는 반드시 **서로의 opening을 읽기 전에** 독립 opening을 각각 제출한다.
+3. 각 opening은 최소 하나의 대안 또는 counter-shape를 포함해야 한다.
+4. starter와 score 초안 작성자는 같으면 안 된다.
+5. `meta.json`에는 `starter`를 기록하고, `02-debate-score.json`에는 `scorer`를 기록한다.
+
+### 논점별 기록 원칙
+
+각 issue는 최소 아래 네 가지를 남긴다.
+
+1. `direction_quality`
+  - 누가 더 좋은 방향/문제 정의를 제시했는가
+2. `critique_quality`
+  - 누가 더 좋은 반박/정교화를 했는가
+3. `originator`
+  - 핵심 아이디어를 먼저 제시한 쪽은 누구인가
+4. `final_owner`
+  - 최종 구조를 닫은 쪽은 누구인가
+
+`originator`와 `final_owner`가 다를 수 있다.
 
 ### score 최소 구조
 
@@ -631,22 +683,31 @@ markdown artifact는 최소 아래 섹션을 포함한다.
 {
   "starter": "sisyphus",
   "scorer": "oracle",
-  "topic_scores": [
+  "issues": [
     {
       "topic": "논점 이름",
-      "position_oracle": "Oracle 입장 한 줄",
-      "position_sisyphus": "Sisyphus 입장 한 줄",
+      "oracle_position": "Oracle 입장 한 줄",
+      "sisyphus_position": "Sisyphus 입장 한 줄",
+      "direction_quality": "oracle",
+      "critique_quality": "sisyphus",
+      "originator": "sisyphus",
+      "final_owner": "oracle",
       "verdict": "oracle",
-      "criteria_basis": ["evidence", "risk_identification"],
-      "reasoning": "판정 근거 한 줄"
+      "confidence": "high",
+      "reason": "판정 근거 한 줄",
+      "adopted_in_contract": false,
+      "status": "resolved"
     }
   ],
-  "overall": {
-    "verdict": "oracle_dominant",
-    "reasoning": "종합 근거 한 줄"
-  }
+  "overall_verdict": "oracle_dominant"
 }
 ```
+
+규칙:
+
+- `direction_quality`, `critique_quality` 값은 `oracle | sisyphus | balanced`만 사용
+- `originator` 값은 `oracle | sisyphus | shared`만 사용
+- `final_owner` 값은 `oracle | sisyphus | shared | unresolved`만 사용
 
 ## 어댑터 문서
 

@@ -1,10 +1,16 @@
 #!/bin/zsh
 set -euo pipefail
 
-if [[ $# -lt 1 || $# -gt 3 ]]; then
-  echo "usage: $0 <task-id> [oracle|sisyphus] [discussion_only|implementation_bound]" >&2
+script_dir="${0:A:h}"
+export PROTOCOL_SCRIPT_DIR="$script_dir"
+source "${script_dir}/protocol_common.sh"
+
+if [[ $# -lt 1 || $# -gt 4 ]]; then
+  echo "usage: $0 <task-id> [oracle|sisyphus] [discussion_only|implementation_bound] [--detached-protocol]" >&2
   exit 1
 fi
+
+protocol_require_managed_alignment "$@"
 
 raw_id="$1"
 intent="discussion_only"
@@ -12,6 +18,8 @@ starter="sisyphus"
 
 for arg in "${@:2}"; do
   case "$arg" in
+    --detached-protocol)
+      ;;
     discussion_only|implementation_bound)
       intent="$arg"
       ;;
@@ -40,11 +48,15 @@ fi
 base_dir=".protocol/runs/${task_id}"
 abs_base_dir="$(pwd -P)/${base_dir}"
 debate_dir="${base_dir}/debate"
+opening_oracle_path="${debate_dir}/opening-oracle.md"
+opening_sisyphus_path="${debate_dir}/opening-sisyphus.md"
 round1_dir="${debate_dir}/round-001"
 prompts_dir="${base_dir}/prompts"
 review1_dir="${base_dir}/review1"
 sisyphus_dir="${base_dir}/sisyphus"
 oracle_dir="${base_dir}/oracle"
+opening_oracle_prompt="${prompts_dir}/opening-oracle.md"
+opening_sisyphus_prompt="${prompts_dir}/opening-sisyphus.md"
 round1_oracle_prompt="${prompts_dir}/round-001-oracle.md"
 round1_sisyphus_prompt="${prompts_dir}/round-001-sisyphus.md"
 
@@ -86,6 +98,28 @@ write_if_missing "${base_dir}/00-brief.md" "# Brief
 ## Relevant Files / Docs
 "
 
+write_if_missing "${opening_oracle_path}" "# Oracle Opening
+
+## Preferred Direction
+
+## Alternatives Considered
+
+## Why This Direction
+
+## Risks In Other Directions
+"
+
+write_if_missing "${opening_sisyphus_path}" "# Sisyphus Opening
+
+## Preferred Direction
+
+## Alternatives Considered
+
+## Why This Direction
+
+## Risks In Other Directions
+"
+
 write_if_missing "${round1_dir}/oracle.md" "# Oracle Round 001
 
 ## Oracle Position
@@ -117,6 +151,8 @@ write_if_missing "${round1_oracle_prompt}" "Oracle,
 아래 canonical 파일만 읽고 작업하라.
 
 - brief: \`${abs_base_dir}/00-brief.md\`
+- oracle opening: \`${abs_base_dir}/debate/opening-oracle.md\`
+- sisyphus opening: \`${abs_base_dir}/debate/opening-sisyphus.md\`
 - counterpart round file: \`${abs_base_dir}/debate/round-001/sisyphus.md\`
 - target file: \`${abs_base_dir}/debate/round-001/oracle.md\`
 
@@ -139,6 +175,8 @@ write_if_missing "${round1_sisyphus_prompt}" "Sisyphus,
 아래 canonical 파일만 읽고 작업하라.
 
 - brief: \`${abs_base_dir}/00-brief.md\`
+- oracle opening: \`${abs_base_dir}/debate/opening-oracle.md\`
+- sisyphus opening: \`${abs_base_dir}/debate/opening-sisyphus.md\`
 - counterpart round file: \`${abs_base_dir}/debate/round-001/oracle.md\`
 - target file: \`${abs_base_dir}/debate/round-001/sisyphus.md\`
 
@@ -156,6 +194,44 @@ write_if_missing "${round1_sisyphus_prompt}" "Sisyphus,
 6. stdout에는 짧게 \`updated <target file>\`만 출력한다.
 "
 
+write_if_missing "${opening_oracle_prompt}" "Oracle,
+
+아래 canonical 파일만 읽고 작업하라.
+
+- brief: \`${abs_base_dir}/00-brief.md\`
+- target file: \`${abs_base_dir}/debate/opening-oracle.md\`
+
+해야 할 일:
+
+1. brief만 읽는다.
+2. counterpart opening이나 round 파일은 읽지 않는다.
+3. target file의 아래 섹션만 채운다.
+   - \`## Preferred Direction\`
+   - \`## Alternatives Considered\`
+   - \`## Why This Direction\`
+   - \`## Risks In Other Directions\`
+4. stdout에는 짧게 \`updated <target file>\`만 출력한다.
+"
+
+write_if_missing "${opening_sisyphus_prompt}" "Sisyphus,
+
+아래 canonical 파일만 읽고 작업하라.
+
+- brief: \`${abs_base_dir}/00-brief.md\`
+- target file: \`${abs_base_dir}/debate/opening-sisyphus.md\`
+
+해야 할 일:
+
+1. brief만 읽는다.
+2. counterpart opening이나 round 파일은 읽지 않는다.
+3. target file의 아래 섹션만 채운다.
+   - \`## Preferred Direction\`
+   - \`## Alternatives Considered\`
+   - \`## Why This Direction\`
+   - \`## Risks In Other Directions\`
+4. stdout에는 짧게 \`updated <target file>\`만 출력한다.
+"
+
 write_if_missing "${base_dir}/01-debate-summary.md" "# Debate Summary
 
 ## Resolved
@@ -168,6 +244,10 @@ write_if_missing "${base_dir}/01-debate-summary.md" "# Debate Summary
 
 - Oracle:
 - Sisyphus:
+- Direction quality:
+- Critique quality:
+- Originator:
+- Final owner:
 - Current conclusion:
 
 ## Decision For Next Stage

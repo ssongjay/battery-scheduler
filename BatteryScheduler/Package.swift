@@ -7,7 +7,8 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "BatteryScheduler",
-            path: "."
+            path: ".",
+            exclude: ["Info.plist"]
         )
     ]
 )

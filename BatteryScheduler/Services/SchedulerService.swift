@@ -36,20 +36,23 @@ final class SchedulerService: ObservableObject {
 
     /// 특정 값으로 즉시 적용 (수동 = 스케줄 일시 중지)
     func applyLimit(_ percent: Int, manual: Bool = false) async {
+        if isApplying { return }
         isApplying = true
         lastError = nil
+        defer { isApplying = false }
+
         if manual {
             manualOverrideActive = true
             manualOverrideLimit = percent
         }
+
         do {
             try await chargeLimitService.setLimit(percent)
             lastApplied = Date()
-            refreshCurrentLimit()
+            currentLimit = await chargeLimitService.currentLimit()
         } catch {
             lastError = error.localizedDescription
         }
-        isApplying = false
     }
 
     /// 수동 override 해제 → 스케줄 복귀
@@ -90,7 +93,7 @@ final class SchedulerService: ObservableObject {
         // 매 분마다 체크 (요일 전환 감지)
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                self?.checkAndApply()
+                await self?.checkAndApply()
             }
         }
 
@@ -100,14 +103,22 @@ final class SchedulerService: ObservableObject {
         }
     }
 
-    private func checkAndApply() {
+    private func checkAndApply() async {
         // 수동 override 중이면 스케줄러가 간섭하지 않음
         if manualOverrideActive { return }
+        if isApplying { return }
 
         let target = policy.limitForToday()
-        refreshCurrentLimit()
-        if target != currentLimit {
-            applySchedule()
+        let latestLimit = await chargeLimitService.currentLimit()
+        currentLimit = latestLimit
+
+        guard let latestLimit else {
+            lastError = "현재 충전 한도를 읽을 수 없어 자동 적용을 건너뜁니다."
+            return
+        }
+
+        if target != latestLimit {
+            await applyLimit(target)
         }
     }
 
